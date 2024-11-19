@@ -31,9 +31,10 @@ class Supervisor {
     // Static pointer to the current instance
     static Supervisor* instance;
 
-    std::vector<std::string> worker_names;
 
 public:
+    std::vector<std::string> worker_names;
+
     // Constructor to initialize the Supervisor with configuration file and name
     Supervisor(std::string config_file = "config.json", std::string name = "None");
 
@@ -50,7 +51,7 @@ public:
     void setup_result_channel(WorkerManager *manager, int indexmanager);
 
     // Start managers
-    void start_managers();
+    virtual void start_managers();
 
     // Start workers
     void start_workers();

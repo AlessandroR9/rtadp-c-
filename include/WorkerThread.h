@@ -66,6 +66,8 @@ public:
     void set_processdata(int processdata1);
     void run();
 
+    std::unique_ptr<std::thread> get_internalthread();
+
     int get_tokenresult() const;
     void set_tokenresult(int value);
     int get_tokenreading() const;

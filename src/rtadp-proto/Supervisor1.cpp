@@ -7,16 +7,20 @@ Supervisor1::Supervisor1(const std::string& config_file, const std::string& name
 
 // Destructor
 Supervisor1::~Supervisor1() {
+    for (WorkerManager* m: manager_workers)
+        delete m;
 }
+    
 
 
 // Override the start_managers method
 void Supervisor1::start_managers() {
     int indexmanager = 0;
-    WorkerManager1* manager1 = new WorkerManager1(indexmanager, this, std::string(1, workername[indexmanager]));
+    WorkerManager* manager1 = new WorkerManager1(indexmanager, this, workername);
     setup_result_channel(manager1, indexmanager);
     manager1->run();
     manager_workers.push_back(manager1);
+    std::cout << "DER SUP manager started. manager_workers lenght: " << manager_workers.size() << std::endl;
 }
 
 // Decode the data before loading it into the queue. For "dataflowtype": "binary"

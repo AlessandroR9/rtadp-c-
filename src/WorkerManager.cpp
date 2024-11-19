@@ -30,9 +30,7 @@ WorkerManager::WorkerManager(int manager_id, Supervisor* supervisor, const std::
     socket_hp_result = supervisor->socket_hp_result;
     pid = getpid();
     socket_monitoring = supervisor->socket_monitoring;
-   
-
-    
+       
     low_priority_queue = std::make_shared<std::queue<std::string>>();
     high_priority_queue = std::make_shared<std::queue<std::string>>();
     result_lp_queue = std::make_shared<std::queue<std::string>>();
@@ -41,14 +39,15 @@ WorkerManager::WorkerManager(int manager_id, Supervisor* supervisor, const std::
     // Initialize monitoring
     monitoringpoint = nullptr;
     monitoringthread = nullptr;
-    num_workers = 0;
+    //////////////////////////////////
+    // num_workers = 0;
+    num_workers = supervisor->manager_num_workers;
+    //////////////////////////////////
     workersstatus = 0;
     workersstatusinit = 0;
 
-    
     tokenresultslock = std::make_shared<std::mutex>();
     tokenreadinglock = std::make_shared<std::mutex>();
-    
 
     // Log the start of WorkerManager
     spdlog::info("{} started", globalname);
@@ -59,7 +58,6 @@ WorkerManager::WorkerManager(int manager_id, Supervisor* supervisor, const std::
     status = "Initialised";
     supervisor->send_info(1, status, fullname, 1, "Low");
 }
-
 
 Supervisor* WorkerManager::getSupervisor() const {
     return supervisor;
@@ -92,7 +90,6 @@ int WorkerManager::getWorkersStatus() const {
 int WorkerManager::getProcessDataSharedValue() const {
     return processdata_shared.load();  // Use .load() to get the value of the atomic variable
 }
-
 
 std::string WorkerManager::getWorkersName() const {
     return workersname;
@@ -153,22 +150,38 @@ MonitoringThread* WorkerManager::getMonitoringThread() const {
 // Function to change token results
 void WorkerManager::change_token_results() {
     std::lock_guard<std::mutex> lock(*tokenresultslock);
+
     for (auto& worker : worker_threads) {
+
         int token_result = worker->get_tokenresult();
         token_result = (token_result - 1 + num_workers) % num_workers; // Fix the circular decrement
         worker->set_tokenresult(token_result);
     }
 }
 
+////////////////////////////////////////
 void WorkerManager::change_token_reading() {
+    if (!tokenreadinglock) {
+        spdlog::error("tokenreadinglock is null");
+        return;
+    }
+
     std::lock_guard<std::mutex> lock(*tokenreadinglock);
+
+    // spdlog::error("WORKERMANAGER: NUM_WORKERS {}", num_workers);
+
+    if (num_workers == 0) {
+        spdlog::error("No workers available to change token reading (num_workers = 0).");
+        return;
+    }
+
     for (auto& worker : worker_threads) {
         int token_reading = worker->get_tokenreading();
         token_reading = (token_reading - 1 + num_workers) % num_workers; // Fix the circular decrement
         worker->set_tokenreading(token_reading);
     }
 }
-
+////////////////////////////////////////
 
 void WorkerManager::set_stopdata(bool stopdata) {
     this->stopdata = stopdata;
@@ -191,8 +204,6 @@ void WorkerManager::setTotalProcessedDataCount(int worker_id, int count) {
     }
 }
 
-
-
 void WorkerManager::set_processdata(int processdata) {
     this->processdata = processdata;
     change_status();
@@ -210,8 +221,6 @@ void WorkerManager::setWorkerStatus(int worker_id, int status) {
         std::cerr << "Invalid worker_id: " << worker_id << std::endl;
     }
 }
-
-
 
 // Function to change the status based on flags
 void WorkerManager::change_status() {
@@ -231,15 +240,21 @@ void WorkerManager::start_service_threads() {
     monitoringpoint = new MonitoringPoint(this);
     monitoringthread = new MonitoringThread(*socket_monitoring, *monitoringpoint);  // Create MonitoringThread instance
     monitoring_thread = std::thread(&MonitoringThread::run, monitoringthread);  // Start the thread with run method
+    std::cout << "Service thread started" << std::endl;
 }
 
 // Function to start worker threads 
 void WorkerManager::start_worker_threads(int num_threads) {
+    spdlog::error("WORKERMANAGER: NUM_THREADS{}", num_threads);
+
     if (num_threads > max_workers) {
         spdlog::warn("WARNING! It is not possible to create more than {} threads", max_workers);
         logger->warning(fmt::format("WARNING! It is not possible to create more than {} threads", max_workers), globalname);
     }
     num_workers = num_threads;
+
+    spdlog::error("WORKERMANAGER: NUM_WORKERS{}", num_workers);
+
     for (int i = 0; i<num_workers; ++i) {
         WorkerBase* worker_base_prt = new WorkerBase();
         auto worker = std::make_shared<WorkerThread>(i, this, std::to_string(i), worker_base_prt);
@@ -263,7 +278,8 @@ void WorkerManager::start() {
 }
 
 // Main run function
-void WorkerManager::run() {
+void WorkerManager::run() {   
+	std::cout << "Start workerManager run" << std::endl;
     start_service_threads();
 
     status = "Initialised";
@@ -315,21 +331,19 @@ void WorkerManager::clean_queue() {
     logger->system("End cleaning queues", globalname);
 }
 
-
+//////////////////////////////////////////////////
 // Function to stop the manager
 void WorkerManager::stop(bool fast) {
-
-    // Stop worker threads
-    for (auto& thread : worker_threads) {
-        thread->stop();
-        if (thread->joinable()){
-            thread->join();
-        }
+    // Chiama stop su ogni WorkerThread per fermarli ordinatamente
+    for (auto& t : worker_threads) {
+        t->stop();
     }
+
     _stop_event = true;
     stop_internalthreads();
     status = "End";
 }
+//////////////////////////////////////////////////
 
 void WorkerManager::stop_internalthreads() {
     spdlog::info("Stopping Manager internal threads...");

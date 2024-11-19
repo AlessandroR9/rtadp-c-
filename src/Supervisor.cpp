@@ -28,6 +28,7 @@ Supervisor::Supervisor(std::string config_file, std::string name)
         // Retrieve and log configuration
         processingtype = config["processing_type"].get<std::string>();
         dataflowtype = config["dataflow_type"].get<std::string>();
+        std::cout << "\n\n\n dataflowtype: " << dataflowtype << std::endl;
         datasockettype = config["datasocket_type"].get<std::string>();
 
         std::cout << "Supervisor: " << globalname << " / " << dataflowtype << " / " 
@@ -118,6 +119,7 @@ std::vector<std::string> Supervisor::getNameWorkers() const {
     return worker_names;
 }
 
+//////////////////////////////////////////////////
 // Load configuration from the specified file and name
 void Supervisor::load_configuration(const std::string &config_file, const std::string &name) {
     config_manager = new ConfigurationManager(config_file);
@@ -133,8 +135,33 @@ void Supervisor::load_configuration(const std::string &config_file, const std::s
     manager_num_workers = std::get<4>(workers_config)[0]; // assuming single value
     workername = std::get<5>(workers_config)[0]; // assuming single value
     name_workers = std::get<6>(workers_config);
-}
 
+    // Log the contents of the tuple
+    spdlog::info("manager_result_sockets_type: {}", manager_result_sockets_type);
+    spdlog::info("manager_result_dataflow_type: {}", manager_result_dataflow_type);
+
+    spdlog::info("manager_result_lp_sockets:");
+    for (const auto& socket : manager_result_lp_sockets) {
+        spdlog::info("  {}", socket);
+    }
+
+    spdlog::info("manager_result_hp_sockets:");
+    for (const auto& socket : manager_result_hp_sockets) {
+        spdlog::info("  {}", socket);
+    }
+
+    spdlog::info("manager_num_workers: {}", manager_num_workers);
+    spdlog::info("workername: {}", workername);
+
+    spdlog::info("name_workers:");
+    for (const auto& worker : name_workers) {
+        spdlog::info("  {}", worker);
+    }
+
+    // Additional information about workers
+    spdlog::info("Number of workers: {}", name_workers.size());
+}
+//////////////////////////////////////////////////
 
 // Start service threads for data handling
 void Supervisor::start_service_threads() {
@@ -196,22 +223,30 @@ void Supervisor::start_managers() {
     setup_result_channel(manager, indexmanager);
     manager->run();
     manager_workers.push_back(manager);
+    std::cout << "BASE SUP manager started. man lenght: " << manager_workers.size() << std::endl;
 }
 
 // Start workers
 void Supervisor::start_workers() {
     int indexmanager = 0;
+
     for (auto &manager : manager_workers) {
         manager->start_worker_threads(manager_num_workers);
+        std::cout << "SUP start_worker_threads" << std::endl;
         indexmanager++;
     }
 }
 
+///////////////////////////////////////
 // Start Supervisor operation
 void Supervisor::start() {
-    start_service_threads();
     start_managers();
     start_workers();
+    start_service_threads();
+
+    // start_service_threads();
+    // start_managers();
+    // start_workers();
 
     status = "Waiting";
     send_info(1, status, fullname, 1, "Low");
@@ -226,6 +261,7 @@ void Supervisor::start() {
         command_shutdown();
     }
 }
+//////////////////////////////////////
 
 // Static function to handle signals
 void Supervisor::handle_signals(int signum) {
@@ -248,10 +284,63 @@ void Supervisor::handle_signals(int signum) {
 }
 
 // Listen for result data
+// Listen for result data
+void Supervisor::listen_for_result() {
+    try {
+        while (continueall) {
+            int indexmanager = 0;
+
+            for (auto& manager : manager_workers) {
+                int attempt = 0;  // Contatore per i tentativi
+                while (manager == nullptr && attempt < 10) {
+                    std::this_thread::sleep_for(std::chrono::seconds(1));  // Sleep for 1 second
+                    spdlog::warn("Waiting for manager workers for listening results, attempt {}", attempt + 1);
+                    attempt++;
+                }
+
+                if (manager == nullptr) {
+                    spdlog::error("Manager worker not initialized after maximum attempts, skipping index {}", indexmanager);
+                    continue;  // Salta l'invio dei risultati se `manager` è ancora nullo
+                }
+
+                try {
+                    send_result(manager, indexmanager);
+                }
+                catch (const std::exception& e) {
+                    spdlog::error("Exception while sending results for manager at index {}: {}", indexmanager, e.what());
+                }
+                catch (...) {
+                    spdlog::error("Unknown exception while sending results for manager at index {}", indexmanager);
+                }
+
+                indexmanager++;
+            }
+        }
+    }
+    catch (const std::exception& e) {
+        spdlog::critical("Exception in listen_for_result: {}", e.what());
+        continueall = false;  // Interrompi il ciclo per evitare ulteriori errori
+    }
+    catch (...) {
+        spdlog::critical("Unknown exception in listen_for_result, terminating thread");
+        continueall = false;
+    }
+
+    spdlog::info("End listen_for_result");
+    logger->system("End listen_for_result", globalname);
+}
+///////////////////////////////////////////////////////////////////
+
+/*
 void Supervisor::listen_for_result() {
     while (continueall) {
         int indexmanager = 0;
+    
         for (auto &manager : manager_workers) {
+            while(manager == nullptr){
+            std::this_thread::sleep_for(std::chrono::seconds(1));  // Sleep for 1 second
+            std::cout << "waiting for manager workers for listening results" << std::endl;
+        }
             send_result(manager, indexmanager);
             indexmanager++;
         }
@@ -259,6 +348,7 @@ void Supervisor::listen_for_result() {
     std::cout << "End listen_for_result" << std::endl;
     logger->system("End listen_for_result", globalname);
 }
+*/
 
 // Send result data
 void Supervisor::send_result(WorkerManager *manager, int indexmanager) {

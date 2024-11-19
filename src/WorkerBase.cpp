@@ -27,18 +27,18 @@ void WorkerBase::init(WorkerManager* manager, Supervisor* supervisor, const std:
     this->workersname = workersname;
     this->fullname = fullname;
     
-
+    // spdlog::error("WorkerBase::init: INIZIALIZZATO");
 }
 
 void WorkerBase::config(const nlohmann::json& configuration) {
+    // spdlog::error("WorkerBase::config: CONFIG");
+
     // Extract the pidtarget
     std::string pidtarget = configuration["header"]["pidtarget"];
 
     // Check if the configuration is meant for this worker
     if (pidtarget == workersname || pidtarget == fullname) {
         logger->info("Received config: {}", configuration.dump());
-    } else {
-        return;
     }
 }
 

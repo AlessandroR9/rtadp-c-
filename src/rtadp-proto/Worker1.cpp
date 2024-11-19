@@ -39,12 +39,20 @@ Worker1::Worker1() : WorkerBase() {
 
 // Override the config method
 void Worker1::config(const nlohmann::json& configuration) {
+    spdlog::error("Worker1::config: CONFIG");
+
     WorkerBase::config(configuration);
 }
 
+////////////////////////////////////////////
 nlohmann::json Worker1::processData(const nlohmann::json& data, int priority) {
+    // DEBUG
+    spdlog::info("\n Received data: {}", data.dump());
+    // spdlog::info("Worker1::processData: Supervisor pointer: {}", (get_supervisor() ? "Valid" : "Null"));
+
     nlohmann::json result;
     std::string dataflow_type = get_supervisor()->dataflowtype;
+    std::cout << "Worker1::processData: dataflow_type: " << dataflow_type << std::endl;
 
     if (dataflow_type == "binary") {
         // Assuming data contains binary data as a string
@@ -79,15 +87,19 @@ nlohmann::json Worker1::processData(const nlohmann::json& data, int priority) {
         std::cout << "Processed file: " << filename << std::endl;
     }
     else if (dataflow_type == "string") {
+        std::cout << "PROCESSO STRINGHE" << std::endl;
         std::string str_data = data.get<std::string>();
+        // std::string serialized_data = data.dump(); // Serializza l'intero JSON in una stringa
+
         result["data"] = str_data;
-        std::cout << "Processed string data: " << str_data << std::endl;
+        std::cout << "\n Processed string data: " << str_data << std::endl;
     }
 
     result["priority"] = priority;
     return result;
 }
-
+////////////////////////////////////////////
+// 
 // Helper function to generate random duration between 0 and 100 milliseconds
 double Worker1::random_duration() {
     std::random_device rd;

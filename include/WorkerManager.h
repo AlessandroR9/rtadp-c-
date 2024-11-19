@@ -17,8 +17,6 @@
 #include <atomic>
 #include <chrono>
 #include <zmq.hpp>
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/basic_file_sink.h>
 #include "MonitoringPoint.h"
 #include "WorkerThread.h"
 #include "MonitoringThread.h"
@@ -162,6 +160,7 @@ public:
     std::string getStatus() const;
 
     std::vector<std::shared_ptr<WorkerThread>> worker_threads;
+    std::vector<std::thread> worker_threads_run;  // Vettore per i thread
 
 
     // Getter for stopdata

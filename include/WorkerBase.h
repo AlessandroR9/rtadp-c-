@@ -19,20 +19,21 @@ class WorkerBase {
     WorkerManager* manager = nullptr;
     Supervisor* supervisor = nullptr;
     std::shared_ptr<spdlog::logger> logger; 
-    std::string workersname;
     std::string fullname;
 
 public:
+    std::string workersname;
+
     WorkerBase();
     virtual ~WorkerBase();
 
     // Initialize the worker with manager, supervisor, and names
     void init(WorkerManager* manager, Supervisor* supervisor, const std::string& workersname, const std::string& fullname);
 
-    void config(const nlohmann::json& configuration);
+    virtual void config(const nlohmann::json& configuration);
 
     // virtual std::string process_data(const std::string& data);
-    nlohmann::json processData(const nlohmann::json& data, int priority);
+    virtual nlohmann::json processData(const nlohmann::json& data, int priority);
 
     Supervisor* get_supervisor() const{{
         return supervisor;

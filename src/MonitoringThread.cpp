@@ -37,10 +37,16 @@ void MonitoringThread::stop() {
 
 void MonitoringThread::run() {
     while (!stop_event) {
+
         json monitoring_data = monitoringpoint.get_data();  // Get the current monitoring data
+
         std::string monitoring_data_str = monitoring_data.dump();  // Convert JSON to string
+
         zmq::message_t message(monitoring_data_str.begin(), monitoring_data_str.end());  // Create ZMQ message
+
         socket_monitoring.send(message, zmq::send_flags::none);  // Send the message through the socket
+            
+
         std::this_thread::sleep_for(std::chrono::seconds(1));  // Sleep for 1 second
     }
 }
