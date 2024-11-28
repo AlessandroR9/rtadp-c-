@@ -17,6 +17,7 @@ void Supervisor1::start_managers() {
     setup_result_channel(manager1, indexmanager);
     manager1->run();
     manager_workers.push_back(manager1);
+    std::cout << "DER SUP manager started. man lenght: " << manager_workers.size() << std::endl;
 }
 
 // Decode the data before loading it into the queue. For "dataflowtype": "binary"

@@ -231,6 +231,7 @@ void WorkerManager::start_service_threads() {
     monitoringpoint = new MonitoringPoint(this);
     monitoringthread = new MonitoringThread(*socket_monitoring, *monitoringpoint);  // Create MonitoringThread instance
     monitoring_thread = std::thread(&MonitoringThread::run, monitoringthread);  // Start the thread with run method
+    std::cout << "SERVICE tHREAD STARTED()" << std::endl;
 }
 
 // Function to start worker threads 
@@ -264,6 +265,8 @@ void WorkerManager::start() {
 
 // Main run function
 void WorkerManager::run() {
+    
+	std::cout << "Start workerManager run" << std::endl;
     start_service_threads();
 
     status = "Initialised";

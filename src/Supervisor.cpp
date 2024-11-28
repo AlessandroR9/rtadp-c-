@@ -28,6 +28,7 @@ Supervisor::Supervisor(std::string config_file, std::string name)
         // Retrieve and log configuration
         processingtype = config["processing_type"].get<std::string>();
         dataflowtype = config["dataflow_type"].get<std::string>();
+        std::cout << "\n\n\n dataflowtype: " << dataflowtype << std::endl;
         datasockettype = config["datasocket_type"].get<std::string>();
 
         std::cout << "Supervisor: " << globalname << " / " << dataflowtype << " / " 
@@ -196,6 +197,7 @@ void Supervisor::start_managers() {
     setup_result_channel(manager, indexmanager);
     manager->run();
     manager_workers.push_back(manager);
+    std::cout << "BASE SUP manager started. man lenght: " << manager_workers.size() << std::endl;
 }
 
 // Start workers
@@ -203,6 +205,7 @@ void Supervisor::start_workers() {
     int indexmanager = 0;
     for (auto &manager : manager_workers) {
         manager->start_worker_threads(manager_num_workers);
+        std::cout << "SUP start_worker_threads" << std::endl;
         indexmanager++;
     }
 }
@@ -251,7 +254,12 @@ void Supervisor::handle_signals(int signum) {
 void Supervisor::listen_for_result() {
     while (continueall) {
         int indexmanager = 0;
+    
         for (auto &manager : manager_workers) {
+            while(manager == nullptr){
+            std::this_thread::sleep_for(std::chrono::seconds(1));  // Sleep for 1 second
+            std::cout << "waiting for manager workers for listening results" << std::endl;
+        }
             send_result(manager, indexmanager);
             indexmanager++;
         }

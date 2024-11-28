@@ -27,7 +27,7 @@ MonitoringPoint::MonitoringPoint(WorkerManager* manager)
 
 // Updates the data map with a new key-value pair
 void MonitoringPoint::update(const std::string& key, const nlohmann::json& value) {
-    std::lock_guard<std::mutex> lock(data_mutex);
+    //std::lock_guard<std::mutex> lock(data_mutex);
     data[key] = value;
 }
 
@@ -68,13 +68,13 @@ nlohmann::json MonitoringPoint::get_data() {
 
 // Sets the status in the data map
 void MonitoringPoint::set_status(const std::string& new_status) {
-    std::lock_guard<std::mutex> lock(data_mutex);
+    //std::lock_guard<std::mutex> lock(data_mutex);
     data["workermanagerstatus"] = new_status;
 }
 
 // Gets the current status from the data map
 std::string MonitoringPoint::get_status() {
-    std::lock_guard<std::mutex> lock(data_mutex);
+    //std::lock_guard<std::mutex> lock(data_mutex);
     return data["workermanagerstatus"].get<std::string>();
 }
 

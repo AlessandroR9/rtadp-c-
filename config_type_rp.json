@@ -1,0 +1,69 @@
+[
+    {
+        "processname": "Monitoring",
+        "monitoring_forwarder":"off",
+        "forwarder_frontend_socket": "none",
+        "forwarder_backend_socket": "none",
+        "monitoring_socket": "tcp://luca-HP-Pavilion-Laptop-15-eh2xxx.local:5561"
+    },
+	{
+        "processname": "CommandCenter",
+        "command_socket": "tcp://luca-HP-Pavilion-Laptop-15-eh2xxx.local:5568"      
+    },
+    {
+    "processname": "RTADP1",
+    "dataflow_type": "string",
+    "processing_type": "thread",
+    "datasocket_type": "pubsub",
+    "data_lp_socket": "tcp://luca-HP-Pavilion-Laptop-15-eh2xxx.local:5564",
+    "data_hp_socket": "tcp://luca-HP-Pavilion-Laptop-15-eh2xxx.local:5565",
+    "command_socket": "tcp://luca-HP-Pavilion-Laptop-15-eh2xxx.local:5568",
+    "monitoring_socket": "tcp://luca-HP-Pavilion-Laptop-15-eh2xxx.local:5561",
+    "manager": [
+        {
+            "result_socket_type": "pubsub",
+            "result_dataflow_type": "string",
+            "result_lp_socket": "tcp://127.0.0.1:5566",
+            "result_hp_socket": "tcp://127.0.0.1:5567",
+            "num_workers": 5,
+            "name": "Rate",
+            "name_workers": "worker"
+        },
+        {
+            "result_socket_type": "none",
+            "result_dataflow_type": "none",
+            "result_lp_socket": "none",
+            "result_hp_socket": "none",
+            "num_workers": 2,
+            "name": "S22Mean",
+            "name_workers": "worker"
+        }
+    ],
+    "logs_path": "/tmp/",
+    "logs_level": 5,
+    "comment": "datasockettype=pushpull|pubsub|custum dataflowtype=binary|filename|string processingtype=process|thread"
+    },
+    {
+        "processname": "RTADP2",
+        "dataflow_type": "string",
+        "processing_type": "thread",
+        "datasocket_type": "pubsub",
+        "data_lp_socket": "tcp://127.0.0.1:5566",
+        "data_hp_socket": "tcp://127.0.0.1:5567",
+        "command_socket": "tcp://luca-HP-Pavilion-Laptop-15-eh2xxx.local:5568",
+        "monitoring_socket": "tcp://luca-HP-Pavilion-Laptop-15-eh2xxx.local:5561",
+        "manager": [
+        {
+            "result_socket_type": "none",
+            "result_dataflow_type": "none",
+            "result_lp_socket": "none",
+            "result_hp_socket": "none",
+            "num_workers": 2,
+            "name": "Rate",
+            "name_workers": "worker"
+        }],
+        "logs_path": "/tmp/",
+        "logs_level": 5,
+        "comment": "datasockettype=pushpull|pubsub|custum dataflowtype=binary|filename|string processingtype=process|thread"
+      }
+]

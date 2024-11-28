@@ -50,7 +50,7 @@ public:
     void setup_result_channel(WorkerManager *manager, int indexmanager);
 
     // Start managers
-    void start_managers();
+    virtual void start_managers();
 
     // Start workers
     void start_workers();

@@ -6,7 +6,7 @@ WorkerManager1::WorkerManager1(int manager_id, Supervisor* supervisor, const std
 
 // Override to start worker threads
 void WorkerManager1::start_worker_threads(int num_threads) {
-    WorkerManager::start_worker_threads(num_threads);
+    // WorkerManager::start_worker_threads(num_threads);
     // Create worker threads
     for (int i = 0; i < num_threads; ++i) {
         auto processor = std::make_shared<Worker1>();
